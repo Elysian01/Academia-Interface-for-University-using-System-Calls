@@ -58,6 +58,7 @@ void connection_handler(int sockFD)
         else if (strchr(readBuffer, '^') != NULL)
         {
             // Skip read from client
+            // ^ => this will just print the message to the client
             strncpy(tempBuffer, readBuffer, strlen(readBuffer) - 1);
             printf("%s\n", tempBuffer);
             writeBytes = write(sockFD, "^", strlen("^"));
@@ -77,6 +78,7 @@ void connection_handler(int sockFD)
         }
         else
         {
+            // now there are 2 cases, password or the normal i/p from client
             bzero(writeBuffer, sizeof(writeBuffer)); // Empty the write buffer
 
             if (strchr(readBuffer, '#') != NULL)

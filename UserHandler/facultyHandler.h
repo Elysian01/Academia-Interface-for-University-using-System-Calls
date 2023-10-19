@@ -114,7 +114,7 @@ int add_course(int connFD, int facultyID)
     }
 
     int limit = atoi(readBuffer);
-    if (limit>COURSE_MAX_SEATS)
+    if (limit > COURSE_MAX_SEATS)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, FACULTY_ERROR_COURSE_LIMIT);
@@ -140,10 +140,8 @@ int add_course(int connFD, int facultyID)
     createCourse(newCourse);
     updateFaculty(faculty);
 
-
     bzero(writeBuffer, sizeof(writeBuffer));
-    sprintf(writeBuffer, "%s", FACULTY_ADD_COURSE_SUCCESS);
-    strcat(writeBuffer,newCourse.name);
+    sprintf(writeBuffer, "%s %d", FACULTY_ADD_COURSE_SUCCESS, newCourse.id);
     strcat(writeBuffer, "^");
     writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
     if (writeBytes == -1)
@@ -181,7 +179,7 @@ bool update_password_faculty(int connFD, int facultyID)
 
     updateFaculty(faculty);
 
-    if(!updateFaculty(faculty))
+    if (!updateFaculty(faculty))
     {
         writeBytes = write(connFD, PASSWORD_CHANGE_FAIL, strlen(PASSWORD_CHANGE_FAIL));
         return false;
@@ -196,12 +194,11 @@ bool update_password_faculty(int connFD, int facultyID)
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
     return true;
-    
 }
 
 bool view_course_enrollments(int connFD, int facultyID)
 {
-    size_t writeBytes, readBytes;            // Number of bytes read from / written to the client
+    size_t writeBytes, readBytes;             // Number of bytes read from / written to the client
     char writeBuffer[1000], readBuffer[1000]; // A buffer used for reading & writing to the client
     bzero(writeBuffer, sizeof(writeBuffer));
     strcpy(writeBuffer, FACULTY_VIEW_COURSE_ENROLLENT);
@@ -215,7 +212,7 @@ bool view_course_enrollments(int connFD, int facultyID)
     for (int i = 0; i < faculty.noOfCoursesOffered; i++)
     {
         Course course = getCourseById(faculty.coursesOffered[i]);
-        if (course.isActive==false)
+        if (course.isActive == false)
         {
             continue;
         }
@@ -225,17 +222,15 @@ bool view_course_enrollments(int connFD, int facultyID)
         for (int i = 0; i < course.noEnrolledStudents; i++)
         {
             Student student = getStudentById(course.enrolledStudents[i]);
-            if (student.isActive==false)
+            if (student.isActive == false)
             {
                 continue;
             }
             char studentDetails[200];
             sprintf(studentDetails, "StudentID: %d, StudentName: %s\n", student.id, student.name);
-            //printf("StudentID: %d, StudentName: %s\n", student.id, student.name);
             strcat(writeBuffer, studentDetails);
         }
-        strcat(writeBuffer, "\n");           
-
+        strcat(writeBuffer, "\n");
     }
     strcat(writeBuffer, "^");
     writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
@@ -247,7 +242,6 @@ bool view_course_enrollments(int connFD, int facultyID)
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
     return true;
-    
 }
 
 bool remove_offered_course(int connFD, int facultyID)
@@ -276,13 +270,13 @@ bool remove_offered_course(int connFD, int facultyID)
     int index = -1;
     for (int i = 0; i < faculty.noOfCoursesOffered; i++)
     {
-        if (faculty.coursesOffered[i]==courseId)
+        if (faculty.coursesOffered[i] == courseId)
         {
             index = i;
             break;
         }
     }
-    if (index==-1)
+    if (index == -1)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, FACULTY_ERROR_COURSE_INVALID);
@@ -301,7 +295,6 @@ bool remove_offered_course(int connFD, int facultyID)
     for (int i = 0; i < course.noEnrolledStudents; i++)
     {
         remove_course_from_student(course.enrolledStudents[i], courseId);
-        
     }
     course.isActive = false;
     course.noEnrolledStudents = 0;
@@ -322,7 +315,6 @@ bool remove_offered_course(int connFD, int facultyID)
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
     return true;
-    
 }
 
 void remove_course_from_student(int studentId, int courseId)
@@ -366,13 +358,13 @@ bool update_course_capacity(int connFD, int facultyID)
     int index = -1;
     for (int i = 0; i < faculty.noOfCoursesOffered; i++)
     {
-        if (faculty.coursesOffered[i]==courseId)
+        if (faculty.coursesOffered[i] == courseId)
         {
             index = i;
             break;
         }
     }
-    if (index==-1)
+    if (index == -1)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, FACULTY_ERROR_COURSE_INVALID);
@@ -400,7 +392,7 @@ bool update_course_capacity(int connFD, int facultyID)
     }
 
     int capacity = atoi(readBuffer);
-    if (capacity > COURSE_MAX_SEATS || capacity<1)
+    if (capacity > COURSE_MAX_SEATS || capacity < 1)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, FACULTY_ERROR_COURSE_INVALID);
@@ -419,7 +411,7 @@ bool update_course_capacity(int connFD, int facultyID)
     {
         for (int i = capacity; i < course.noEnrolledStudents; i++)
         {
-            remove_course_from_student(course.enrolledStudents[i] ,courseId);
+            remove_course_from_student(course.enrolledStudents[i], courseId);
         }
         course.noEnrolledStudents = capacity;
     }
@@ -437,7 +429,6 @@ bool update_course_capacity(int connFD, int facultyID)
     }
 
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
-
 
     return true;
 }

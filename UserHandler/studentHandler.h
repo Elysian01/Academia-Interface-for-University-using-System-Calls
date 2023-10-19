@@ -10,6 +10,7 @@ int enroll_course(int connFD, int studentId);
 int de_enroll_course(int connFD, int studentId);
 int view_enrolled_courses(int connFD, int studentID);
 bool update_password_student(int connFD, int studentID);
+void show_courses(int connFD);
 
 //================================= Function Definition =================================
 
@@ -56,6 +57,9 @@ bool student_operation_handler(int connFD)
             case 4:
                 update_password_student(connFD, studentID);
                 break;
+            case 5:
+                show_courses(connFD);
+                break;
             default:
                 writeBytes = write(connFD, STUDENT_LOGOUT, strlen(STUDENT_LOGOUT));
                 return false;
@@ -94,7 +98,7 @@ int enroll_course(int connFD, int studentId)
 
     course = getCourseById(courseId);
 
-    if (courseId<=0 || courseId>=getNextCourseId() || course.isActive==false)
+    if (courseId <= 0 || courseId >= getNextCourseId() || course.isActive == false)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, STUDENT_ERROR_COURSE_INVALID);
@@ -109,11 +113,11 @@ int enroll_course(int connFD, int studentId)
     }
 
     Student student = getStudentById(studentId);
-    
+
     // Check if student already enrolled in the course
     for (int i = 0; i < student.noOfCoursesEnrolled; i++)
     {
-        if (student.coursesEnrolled[i]==courseId)
+        if (student.coursesEnrolled[i] == courseId)
         {
             bzero(writeBuffer, sizeof(writeBuffer));
             strcpy(writeBuffer, STUDENT_ERROR_COURSE_TAKEN);
@@ -127,7 +131,7 @@ int enroll_course(int connFD, int studentId)
             return false;
         }
     }
-    
+
     if (course.noEnrolledStudents == course.maxSeats)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
@@ -147,7 +151,6 @@ int enroll_course(int connFD, int studentId)
     updateCourse(course);
     updateStudent(student);
 
-
     bzero(writeBuffer, sizeof(writeBuffer));
     sprintf(writeBuffer, "%s", STUDENT_ENROLL_COURSE_SUCCESS);
     strcat(writeBuffer, "^");
@@ -161,7 +164,6 @@ int enroll_course(int connFD, int studentId)
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
     return course.id;
-
 }
 
 int de_enroll_course(int connFD, int studentId)
@@ -188,7 +190,7 @@ int de_enroll_course(int connFD, int studentId)
     int courseId = atoi(readBuffer);
     course = getCourseById(courseId);
 
-    if (courseId<=0 || courseId>=getNextCourseId() || course.isActive==false)
+    if (courseId <= 0 || courseId >= getNextCourseId() || course.isActive == false)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, STUDENT_ERROR_COURSE_INVALID);
@@ -203,17 +205,17 @@ int de_enroll_course(int connFD, int studentId)
     }
 
     Student student = getStudentById(studentId);
-    bool notFound = true; 
+    bool notFound = true;
     for (int i = 0; i < course.noEnrolledStudents; i++)
     {
-        if (notFound && course.enrolledStudents[i]==studentId)
+        if (notFound && course.enrolledStudents[i] == studentId)
         {
             notFound = false;
             continue;
         }
-        if (notFound==false)
+        if (notFound == false)
         {
-            course.enrolledStudents[i-1] = course.enrolledStudents[i];
+            course.enrolledStudents[i - 1] = course.enrolledStudents[i];
         }
     }
     course.noEnrolledStudents--;
@@ -242,12 +244,11 @@ int de_enroll_course(int connFD, int studentId)
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
     return course.id;
-
 }
 
 int view_enrolled_courses(int connFD, int studentID)
 {
-    size_t writeBytes, readBytes;            // Number of bytes read from / written to the client
+    size_t writeBytes, readBytes;             // Number of bytes read from / written to the client
     char readBuffer[1000], writeBuffer[1000]; // A buffer used for reading & writing to the client
     bzero(writeBuffer, sizeof(writeBuffer));
     strcpy(writeBuffer, STUDENT_VIEW_COURSES);
@@ -263,7 +264,7 @@ int view_enrolled_courses(int connFD, int studentID)
     for (int i = 0; i < student.noOfCoursesEnrolled; i++)
     {
         course = getCourseById(student.coursesEnrolled[i]);
-        if (course.isActive==false)
+        if (course.isActive == false)
         {
             continue;
         }
@@ -281,7 +282,6 @@ int view_enrolled_courses(int connFD, int studentID)
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
     return course.id;
-    
 }
 
 bool update_password_student(int connFD, int studentID)
@@ -306,7 +306,7 @@ bool update_password_student(int connFD, int studentID)
     strcpy(hashedPassword, crypt(readBuffer, SALT_BAE));
     strcpy(student.password, hashedPassword);
 
-    if(!updateStudent(student))
+    if (!updateStudent(student))
     {
         writeBytes = write(connFD, PASSWORD_CHANGE_FAIL, strlen(PASSWORD_CHANGE_FAIL));
         return false;
@@ -321,8 +321,37 @@ bool update_password_student(int connFD, int studentID)
     readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
     return true;
-    
 }
 
+void show_courses(int connFD)
+{
+    size_t writeBytes, readBytes;             // Number of bytes read from / written to the client
+    char writeBuffer[1000], readBuffer[1000]; // A buffer used for reading & writing to the client
+    bzero(writeBuffer, sizeof(writeBuffer));
+    strcpy(writeBuffer, FACULTY_VIEW_COURSES);
+    strcat(writeBuffer, "\n\n");
+    int totalCourses = getNextCourseId();
+    for (int i = 0; i < totalCourses; i++)
+    {
+        Course course = getCourseById(i);
+        if (course.isActive == false)
+        {
+            continue;
+        }
+        char courseDetails[200];
+        sprintf(courseDetails, "\tCourseId: %d CourseName: %s\n", course.id, course.name);
+        strcat(writeBuffer, courseDetails);
+        strcat(writeBuffer, "\n");
+    }
+    strcat(writeBuffer, "^");
+    writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
+    if (writeBytes == -1)
+    {
+        perror("Error while writing Course Enrollments to client!");
+        return;
+    }
+    readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
 
+    return;
+}
 #endif

@@ -20,15 +20,15 @@
 // Function Prototypes =================================
 
 int login_handler(UserType user, int connFD);
-Faculty getFacultyByLoginId(char* loginId);
-Student getStudentByLoginId(char* loginId);
+Faculty getFacultyByLoginId(char *loginId);
+Student getStudentByLoginId(char *loginId);
 
 // =====================================================
 
 // Function Definition =================================
 
 int login_handler(UserType user, int connFD)
-{    
+{
     ssize_t readBytes, writeBytes;            // Number of bytes written to / read from the socket
     char readBuffer[1000], writeBuffer[1000]; // Buffer for reading from / writing to the client
     char tempBuffer[1000];
@@ -73,13 +73,13 @@ int login_handler(UserType user, int connFD)
     else if (user == FACULTY)
     {
         faculty = getFacultyByLoginId(readBuffer);
-        if (faculty.id!=-1)
+        if (faculty.id != -1)
             userFound = true;
     }
     else if (user == STUDENT)
     {
         student = getStudentByLoginId(readBuffer);
-        if (student.id!=-1 && student.isActive)
+        if (student.id != -1 && student.isActive)
             userFound = true;
     }
 
@@ -102,6 +102,7 @@ int login_handler(UserType user, int connFD)
         }
 
         char hashedPassword[1000];
+        printf("%s %s\n", readBuffer, crypt(readBuffer, SALT_BAE));
         strcpy(hashedPassword, crypt(readBuffer, SALT_BAE));
 
         if (user == ADMIN)
@@ -132,7 +133,7 @@ int login_handler(UserType user, int connFD)
     return false;
 }
 
-Faculty getFacultyByLoginId(char* loginId)
+Faculty getFacultyByLoginId(char *loginId)
 {
     Faculty faculty;
     int totalFaculty = getNextFacultyId();
@@ -148,7 +149,7 @@ Faculty getFacultyByLoginId(char* loginId)
     return faculty;
 }
 
-Student getStudentByLoginId(char* loginId)
+Student getStudentByLoginId(char *loginId)
 {
     Student student;
     int totalStudent = getNextStudentId();

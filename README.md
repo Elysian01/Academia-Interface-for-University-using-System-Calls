@@ -27,3 +27,8 @@ all these User accounts will be managed by the Administrator.
 Server maintains three files as Databases (Course, Faculty and Student) and serves multiple clients concurrently. Clients can connect to the server and access their specific academic details.
 
 To handle concurrent client requests fork system call is used.
+
+To compile server
+```bash
+gcc server.c -o server.out -lcrypt
+```
