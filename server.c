@@ -1,273 +1,119 @@
-#include "server.h"
+#include <stdio.h> // Import for `printf` & `perror` functions
+#include <errno.h> // Import for `errno` variable
+#include <fcntl.h>      // Import for `fcntl` functions
+#include <unistd.h>     // Import for `fork`, `fcntl`, `read`, `write`, `lseek, `_exit` functions
+#include <sys/types.h>  // Import for `socket`, `bind`, `listen`, `accept`, `fork`, `lseek` functions
+#include <sys/socket.h> // Import for `socket`, `bind`, `listen`, `accept` functions
+#include <netinet/ip.h> // Import for `sockaddr_in` stucture
+#include <string.h>  // Import for string functions
+#include <stdbool.h> // Import for `bool` data type
+#include <stdlib.h>  // Import for `atoi` function
 
-int login(int client_socket, int type)
+#include "config.h"
+#include "Model/model.h"
+#include "UserHandler/adminHandler.h"
+#include "UserHandler/facultyHandler.h"
+#include "UserHandler/studentHandler.h"
+
+void connection_handler(int connFD); // Handles the communication with the client
+
+void main()
 {
-    char *str;
-    int n, status;
-    char recv_buff[20], login_id[50], password[50];
-    str = "Enter user-name: ";
-    write(client_socket, str, strlen(str));
+    int socketFileDescriptor, socketBindStatus, socketListenStatus, connectionFileDescriptor;
+    struct sockaddr_in serverAddress, clientAddress;
 
-    n = read_line(client_socket, recv_buff, sizeof(recv_buff));
-    my_strcpy(login_id, recv_buff);
-
-    str = "Enter password: ";
-    write(client_socket, str, strlen(str));
-    memset(recv_buff, 0, sizeof(recv_buff));
-
-    n = read_line(client_socket, recv_buff, sizeof(recv_buff));
-    my_strcpy(password, recv_buff);
-
-    int fd;
-    struct login st;
-    switch (type)
+    socketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+    if (socketFileDescriptor == -1)
     {
-    case ADMIN:
-        if ((strcmp(login_id, "admin") == 0) && (strcmp(password, "pass") == 0))
-            status = 1;
-        break;
-    case FACULTY:
-    case STUDENT:
-        openLoginFile(&fd, O_RDONLY);
-        while (1)
-        {
-            n = read(fd, &st, sizeof(struct login));
-            if (n < 0)
-            {
-                perror("read");
-                break;
-            }
-            if (n == 0)
-                break;
-            if (checkLoginDetails(login_id, password))
-            {
-                status = 1;
-                break;
-            }
-        }
+        perror("Error while creating server socket!");
+        _exit(0);
     }
 
-    if (status)
-        str = "login successful\n";
-    else
-        str = "login not successful\n";
-    write(client_socket, str, strlen(str));
-    return status;
-}
+    serverAddress.sin_family = AF_INET;                // IPv4
+    serverAddress.sin_port = htons(8081);              // Server will listen to port 8080
+    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY); // Binds the socket to all interfaces
 
-void adminMenu(int client_socket)
-{
-    char recv_buff[20];
-    int n, status = 0;
-    char *str;
-    char welcome_msg[250] = "...Welcome to Admin Menu...\n";
-    char *menu = "1. Add Student\n2. View Student Details\n3. Add Faculty\n4. View Faculty Details\n5. Activate Student\n\
-6. Block Student\n7. Update Student Details\n8. Update Faculty Details\n9. Logout\nEnter your choice: ";
-    strcat(welcome_msg, menu);
-    // n = read_line(client_socket, recv_buff, sizeof(recv_buff));
-    while (!status)
+    socketBindStatus = bind(socketFileDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
+    if (socketBindStatus == -1)
     {
-        send(client_socket, welcome_msg, strlen(welcome_msg), MSG_DONTWAIT);
-        read_line(client_socket, recv_buff, sizeof(recv_buff));
-        switch (atoi(recv_buff))
-        {
-        case 1:
-            addStudent(client_socket);
-            break;
-        case 2:
-            viewStudent(client_socket);
-            break;
-        case 3:
-            addFaculty(client_socket);
-            break;
-        case 4:
-            viewFaculty(client_socket);
-            break;
-        case 5:
-            modifyStudent(client_socket, 2);
-            break;
-        case 6:
-            modifyStudent(client_socket, 1);
-            break;
-        case 7:
-            modifyStudent(client_socket, 3);
-            break;
-        case 8:
-            modifyFaculty(client_socket);
-            break;
-        case 9:
-            str = "Logged out\nPress Enter to close the connection";
-            write(client_socket, str, strlen(str));
-            status = 1;
-            break;
-        default:
-            str = "Enter correct choice\n";
-            write(client_socket, str, strlen(str));
-        }
-    }
-}
-
-void facultyMenu(int client_socket)
-{
-    char recv_buff[20];
-    int n, status = 0;
-    char *str;
-    char welcome_msg[250] = "...Welcome to Faculty Menu...\n";
-    char *menu = "1. View Offering Courses\n2. Add new course\n3. Remove course\n4. Update Course\n5. Change password\n\
-6. Logout\nEnter your choice: ";
-    strcat(welcome_msg, menu);
-    // n = read_line(client_socket, recv_buff, sizeof(recv_buff));
-    while (!status)
-    {
-        send(client_socket, welcome_msg, strlen(welcome_msg), MSG_DONTWAIT);
-        read_line(client_socket, recv_buff, sizeof(recv_buff));
-        switch (atoi(recv_buff))
-        {
-        case 1:
-            viewCourses(client_socket);
-            break;
-        case 2:
-            addCourse(client_socket);
-            break;
-        case 3:
-            removeCourse(client_socket);
-            break;
-        case 4:
-            modifyCourse(client_socket);
-            break;
-        case 5:
-            modifyStudent(client_socket, 2);
-            break;
-        case 6:
-            str = "Logged out\nPress Enter to close the connection";
-            write(client_socket, str, strlen(str));
-            status = 1;
-            break;
-        default:
-            str = "Enter correct choice\n";
-            write(client_socket, str, strlen(str));
-        }
-    }
-}
-
-void handleAdmin(int client_socket)
-{
-    while (!login(client_socket, ADMIN))
-        ;
-    adminMenu(client_socket);
-}
-
-void handleFaculty(int client_socket)
-{
-    while (!login(client_socket, FACULTY))
-        ;
-    facultyMenu(client_socket);
-}
-
-void handleStudent(int client_socket)
-{
-    while (!login(client_socket, STUDENT))
-        ;
-}
-
-int main(int argc, char **argv)
-{
-    if (argc != 3)
-    {
-        printf("server <ip-address> <port-number>\n");
-        exit(EXIT_FAILURE);
+        perror("Error while binding to server socket!");
+        _exit(0);
     }
 
-    char *ip_address = argv[1];
-    int port_number = atoi(argv[2]);
-    struct sockaddr_in server_address, client_address;
-    int listening_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (listening_socket < 0)
+    socketListenStatus = listen(socketFileDescriptor, 10);
+    if (socketListenStatus == -1)
     {
-        perror("socket");
-        exit(EXIT_FAILURE);
+        perror("Error while listening for connections on the server socket!");
+        close(socketFileDescriptor);
+        _exit(0);
     }
-    printf("Listen socket created successfully\n");
 
-    memset(&server_address, 0, sizeof(server_address));
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(port_number);
-    server_address.sin_addr.s_addr = inet_addr(ip_address);
-    if (bind(listening_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
-    {
-        perror("bind");
-        exit(EXIT_FAILURE);
-    }
-    printf("Binding to socket is successful\n");
-
-    if (listen(listening_socket, 5) < 0)
-    {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
-    printf("Server listening on port : %d...\n", port_number);
-
-    int client_addr_len;
-    int client_socket;
-    int pid;
+    int clientSize;
     while (1)
     {
-        client_socket = accept(listening_socket, (struct sockaddr *)&client_address, &client_addr_len);
-        if (client_socket < 0)
+        clientSize = (int)sizeof(clientAddress);
+        connectionFileDescriptor = accept(socketFileDescriptor, (struct sockaddr *)&clientAddress, &clientSize);
+        if (connectionFileDescriptor == -1)
         {
-            perror("accept");
-            exit(EXIT_FAILURE);
-        }
-        printf("Client connected\n");
-
-        if (fork())
-        {
-            close(client_socket);
+            perror("Error while connecting to client!");
+            close(socketFileDescriptor);
         }
         else
         {
-            close(listening_socket);
-            // char client_ip[INET_ADDRSTRLEN];
-            // inet_ntop(AF_INET, &client_address.sin_addr, client_ip, sizeof(client_ip));
-            // printf("Client details: Ip Address: %s", client_ip);
-            // write(STDOUT_FILENO, client_ip, strlen(client_ip));
-            char welcome_msg[] = "Welcome to Academia :: Course Registration\nLogin Type\
-                1.Admin\
-                2.Professor\
-                3.Student\nEnter your choice: ";
-
-            char recv_buff[20];
-            int status = 0;
-            char *str;
-
-            while (!status)
+            if (!fork())
             {
-                write(client_socket, welcome_msg, strlen(welcome_msg));
-                memset(recv_buff, 0, sizeof(recv_buff));
-                read_line(client_socket, recv_buff, sizeof(recv_buff));
-                switch (atoi(recv_buff))
-                {
-                case 1:
-                    handleAdmin(client_socket);
-                    status = 1;
-                    break;
-                case 2:
-                    handleFaculty(client_socket);
-                    status = 1;
-                    break;
-                case 3:
-                    handleStudent(client_socket);
-                    status = 1;
-                    break;
-                default:
-                    str = "Enter correct choice\n";
-                    write(client_socket, str, strlen(str));
-                }
+                // Child will enter this branch
+                connection_handler(connectionFileDescriptor);
+                close(connectionFileDescriptor);
+                _exit(0);
             }
-            close(client_socket);
-            exit(EXIT_SUCCESS);
         }
     }
 
-    return 0;
+    close(socketFileDescriptor);
+}
+
+void connection_handler(int connectionFileDescriptor)
+{
+    printf("Client has connected to the server!\n");
+
+    char readBuffer[1000], writeBuffer[1000];
+    ssize_t readBytes, writeBytes;
+    int userChoice;
+
+    writeBytes = write(connectionFileDescriptor, INITIAL_PROMPT, strlen(INITIAL_PROMPT));
+    if (writeBytes == -1)
+        perror("Error while sending first prompt to the user!");
+    else
+    {
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        if (readBytes == -1)
+            perror("Error while reading from client");
+        else if (readBytes == 0)
+            printf("No data was sent by the client");
+        else
+        {
+            userChoice = atoi(readBuffer);
+            switch (userChoice)
+            {
+            case 1:
+                // Admin
+                admin_operation_handler(connectionFileDescriptor);
+                break;
+            case 2:
+                // Faculty
+                faculty_operation_handler(connectionFileDescriptor);
+                break;
+            case 3:
+                // Student
+                student_operation_handler(connectionFileDescriptor);
+                break;
+            default:
+                // Exit
+                break;
+            }
+        }
+    }
+    printf("Terminating connection to client!\n");
 }
