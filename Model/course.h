@@ -1,7 +1,9 @@
 #ifndef COURSES_H
 #define COURSES_H
 #include "../config.h"
-typedef struct {
+
+typedef struct
+{
     int id;
     char name[20];
     int facultyId;

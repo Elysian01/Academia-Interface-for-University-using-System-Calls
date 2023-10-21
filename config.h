@@ -107,7 +107,7 @@
 #define STUDENT_LOGOUT "Logging out!$"
 
 // STUDENT MENU
-#define STUDENT_MENU "1. Enroll Course\n2. Unenroll Course\n3. View Enrolled Courses\n4. Change Password\n5. View Availabe Courses\nPress any other key to logout"
+#define STUDENT_MENU "1. Enroll Course\n2. Unenroll Course\n3. View Enrolled Courses\n4. Change Password\n5. View Courses\nPress any other key to logout"
 
 // ENROLL COURSE
 #define STUDENT_ENROLL_COURSE "Enter courseID?"

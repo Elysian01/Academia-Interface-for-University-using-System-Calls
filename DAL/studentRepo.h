@@ -3,9 +3,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <errno.h> 
+#include <errno.h>
 #include "../Model/model.h"
 #include "../config.h"
+
+// Functions Definitions
+
+// int getNextStudentId()
+// void createStudent(Student newStudent)
+// Student getStudentById(int studentID)
+// bool updateStudent(Student student)
 
 int getNextStudentId()
 {
@@ -53,7 +60,6 @@ int getNextStudentId()
 
         return previousStudent.id + 1;
     }
-
 }
 
 void createStudent(Student newStudent)
@@ -100,7 +106,7 @@ Student getStudentById(int studentID)
     off_t offset;
     int lockingStatus;
     int studentFileDescriptor = open(STUDENT_FILE, O_RDONLY);
-    offset = lseek(studentFileDescriptor, (studentID-1) * sizeof(Student), SEEK_SET);
+    offset = lseek(studentFileDescriptor, (studentID - 1) * sizeof(Student), SEEK_SET);
     if (offset == -1)
     {
         perror("Error while seeking to required Student record!");
@@ -130,7 +136,6 @@ Student getStudentById(int studentID)
     close(studentFileDescriptor);
 
     return student;
-
 }
 
 bool updateStudent(Student student)
@@ -142,7 +147,7 @@ bool updateStudent(Student student)
         perror("Error while opening student file");
         return false;
     }
-    int offset = lseek(studentFileDescriptor, (student.id-1) * sizeof(Student), SEEK_SET);
+    int offset = lseek(studentFileDescriptor, (student.id - 1) * sizeof(Student), SEEK_SET);
     if (offset == -1)
     {
         perror("Error while seeking to required student record!");

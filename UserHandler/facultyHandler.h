@@ -208,6 +208,7 @@ bool view_course_enrollments(int connFD, int facultyID)
         perror("Error while writing STUDENT_VIEW_COURSES to client!");
         return false;
     }
+
     Faculty faculty = getFacultyById(facultyID);
     for (int i = 0; i < faculty.noOfCoursesOffered; i++)
     {

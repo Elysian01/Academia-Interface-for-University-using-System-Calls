@@ -38,10 +38,11 @@ void main()
 
     close(socketFileDescriptor);
 }
-// Handles the read & write operations w the server
+
+// Handles the read & write operations with the server
 void connection_handler(int sockFD)
 {
-    char readBuffer[1000], writeBuffer[1000]; // A buffer used for reading from / writting to the server
+    char readBuffer[1000], writeBuffer[1000]; // A buffer used for reading from user / writting to the server
     ssize_t readBytes, writeBytes;            // Number of bytes read from / written to the socket
 
     char tempBuffer[1000];
@@ -50,11 +51,12 @@ void connection_handler(int sockFD)
     {
         bzero(readBuffer, sizeof(readBuffer)); // Empty the read buffer
         bzero(tempBuffer, sizeof(tempBuffer));
-        readBytes = read(sockFD, readBuffer, sizeof(readBuffer));
+        readBytes = read(sockFD, readBuffer, sizeof(readBuffer)); // read the ition from nstrucserver
         if (readBytes == -1)
             perror("Error while reading from client socket!");
         else if (readBytes == 0)
             printf("No error received from server! Closing the connection to the server now!\n");
+
         else if (strchr(readBuffer, '^') != NULL)
         {
             // Skip read from client
@@ -78,17 +80,18 @@ void connection_handler(int sockFD)
         }
         else
         {
-            // now there are 2 cases, password or the normal i/p from client
             bzero(writeBuffer, sizeof(writeBuffer)); // Empty the write buffer
 
+            // now there are 2 cases, password or the normal i/p from client
             if (strchr(readBuffer, '#') != NULL)
-                strcpy(writeBuffer, getpass(readBuffer));
+                strcpy(writeBuffer, getpass(readBuffer)); // getpass functions will take input from the client specially designed for passwords
             else
             {
                 printf("%s\n", readBuffer);
-                scanf("%[^\n]%*c", writeBuffer); // Take user input!
+                scanf("%[^\n]%*c", writeBuffer); // else Take user input!
             }
 
+            // sending the data to the server
             writeBytes = write(sockFD, writeBuffer, strlen(writeBuffer));
             if (writeBytes == -1)
             {

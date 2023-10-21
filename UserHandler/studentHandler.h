@@ -74,6 +74,8 @@ bool student_operation_handler(int connFD)
     return true;
 }
 
+// For enrolling into a course, course should be valid and active, student should not be already enrolled,
+// and course should have empty slots
 int enroll_course(int connFD, int studentId)
 {
     ssize_t readBytes, writeBytes;
@@ -88,6 +90,8 @@ int enroll_course(int connFD, int studentId)
         return false;
     }
     bzero(readBuffer, sizeof(readBuffer));
+
+    // get course-id from client
     readBytes = read(connFD, readBuffer, sizeof(readBuffer));
     if (readBytes == -1)
     {
@@ -218,6 +222,7 @@ int de_enroll_course(int connFD, int studentId)
             course.enrolledStudents[i - 1] = course.enrolledStudents[i];
         }
     }
+
     course.noEnrolledStudents--;
     for (int i = 0; i < student.noOfCoursesEnrolled; i++)
     {
@@ -354,4 +359,5 @@ void show_courses(int connFD)
 
     return;
 }
+
 #endif

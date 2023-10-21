@@ -22,6 +22,7 @@ bool admin_operation_handler(int connFD)
         char readBuffer[1000], writeBuffer[1000]; // A buffer used for reading & writing to the client
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, ADMIN_LOGIN_SUCCESS);
+
         while (1)
         {
             strcat(writeBuffer, "\n");
@@ -34,6 +35,7 @@ bool admin_operation_handler(int connFD)
             }
             bzero(writeBuffer, sizeof(writeBuffer));
 
+            // getting the choice
             readBytes = read(connFD, readBuffer, sizeof(readBuffer));
             if (readBytes == -1)
             {
@@ -50,7 +52,7 @@ bool admin_operation_handler(int connFD)
             case 2:
                 add_faculty(connFD);
                 break;
-            case 3: 
+            case 3:
                 modify_student_info(connFD);
                 break;
             case 4:
@@ -119,7 +121,7 @@ int add_student(int connFD)
 
     newStudent.isActive = true;
     newStudent.noOfCoursesEnrolled = 0;
-    
+
     newStudent.id = getNextStudentId();
     // DEFAULT LOGIN ID AS STUDENT NAME
     strcpy(newStudent.login, newStudent.name);
@@ -127,7 +129,6 @@ int add_student(int connFD)
     sprintf(writeBuffer, "%d", newStudent.id);
     strcat(newStudent.login, writeBuffer);
     createStudent(newStudent);
-
 
     bzero(writeBuffer, sizeof(writeBuffer));
     sprintf(writeBuffer, "%s%s-%d\n%s%s", ADMIN_ADD_STUDENT_AUTOGEN_LOGIN, newStudent.name, newStudent.id, ADMIN_ADD_STUDENT_AUTOGEN_PASSWORD, AUTOGEN_PASSWORD);
@@ -193,7 +194,7 @@ int add_faculty(int connFD)
     strcpy(newFaculty.password, hashedPassword);
 
     newFaculty.noOfCoursesOffered = 0;
-    
+
     newFaculty.id = getNextFacultyId();
     // DEFAULT LOGIN ID AS Faculty NAME
     strcpy(newFaculty.login, newFaculty.name);
@@ -201,7 +202,6 @@ int add_faculty(int connFD)
     sprintf(writeBuffer, "%d", newFaculty.id);
     strcat(newFaculty.login, writeBuffer);
     createFaculty(newFaculty);
-
 
     bzero(writeBuffer, sizeof(writeBuffer));
     sprintf(writeBuffer, "%s%s-%d\n%s%s", ADMIN_ADD_FACULTY_AUTOGEN_LOGIN, newFaculty.name, newFaculty.id, ADMIN_ADD_FACULTY_AUTOGEN_PASSWORD, AUTOGEN_FACULTY_PASSWORD);
@@ -224,9 +224,7 @@ bool modify_student_info(int connFD)
     char readBuffer[1000], writeBuffer[1000];
 
     Student student;
-
     int studentID;
-
     off_t offset;
     int lockingStatus;
 
@@ -262,7 +260,7 @@ bool modify_student_info(int connFD)
         return false;
     }
     student = getStudentById(studentID);
-    if(student.id == -1)
+    if (student.id == -1)
     {
         perror("Error while fetching student with given StudentID!");
         return false;
@@ -281,9 +279,10 @@ bool modify_student_info(int connFD)
     }
 
     int choice = atoi(readBuffer);
-    
+
     if (choice == 0)
-    { // A non-numeric string was passed to atoi
+    {
+        // A non-numeric string was passed to atoi
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, ERRON_INPUT_FOR_NUMBER);
         writeBytes = write(connFD, writeBuffer, strlen(writeBuffer));
@@ -360,9 +359,9 @@ bool modify_student_info(int connFD)
             return false;
         }
         int choice = atoi(readBuffer);
-    
-        if (choice == 0 || choice>2)
-        { 
+
+        if (choice == 0 || choice > 2)
+        {
             // A non-numeric string was passed to atoi
             bzero(writeBuffer, sizeof(writeBuffer));
             strcpy(writeBuffer, ERRON_INPUT_FOR_NUMBER);
@@ -375,31 +374,32 @@ bool modify_student_info(int connFD)
             readBytes = read(connFD, readBuffer, sizeof(readBuffer)); // Dummy read
             return false;
         }
-        student.isActive = (choice == 1) ? true:  false;
-        if (choice!=1)
+        student.isActive = (choice == 1) ? true : false;
+        // if we are deactivating student, we have to remove him from every enrolled course
+        if (choice != 1)
         {
             for (int j = 0; j < student.noOfCoursesEnrolled; j++)
             {
                 Course course = getCourseById(student.coursesEnrolled[j]);
-                bool notFound = true; 
+                bool notFound = true;
                 for (int i = 0; i < course.noEnrolledStudents; i++)
                 {
-                    if (notFound && course.enrolledStudents[i]==student.id)
+                    if (notFound && course.enrolledStudents[i] == student.id)
                     {
                         notFound = false;
                         continue;
                     }
-                    if (notFound==false)
+                    if (notFound == false)
                     {
-                        course.enrolledStudents[i-1] = course.enrolledStudents[i];
+                        course.enrolledStudents[i - 1] = course.enrolledStudents[i];
                     }
                 }
                 course.noEnrolledStudents--;
                 updateCourse(course);
             }
             student.noOfCoursesEnrolled = 0;
-        }       
-        break;   
+        }
+        break;
     default:
         bzero(writeBuffer, sizeof(writeBuffer));
         strcpy(writeBuffer, INVALID_MENU_CHOICE);
@@ -413,7 +413,7 @@ bool modify_student_info(int connFD)
         return false;
     }
 
-    if(!updateStudent(student))
+    if (!updateStudent(student))
     {
         return false;
     }
@@ -488,7 +488,7 @@ bool modify_faculty_info(int connFD)
         return false;
     }
     faculty = getFacultyById(facultyID);
-    if(faculty.id == -1)
+    if (faculty.id == -1)
     {
         perror("Error while fetching faculty with given facultyID!");
         return false;
@@ -507,7 +507,7 @@ bool modify_faculty_info(int connFD)
     }
 
     int choice = atoi(readBuffer);
-    
+
     if (choice == 0)
     { // A non-numeric string was passed to atoi
         bzero(writeBuffer, sizeof(writeBuffer));
@@ -585,7 +585,7 @@ bool modify_faculty_info(int connFD)
         return false;
     }
 
-    if(!updateFaculty(faculty))
+    if (!updateFaculty(faculty))
     {
         return false;
     }

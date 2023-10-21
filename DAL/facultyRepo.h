@@ -3,9 +3,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <errno.h> 
+#include <errno.h>
 #include "../Model/model.h"
 #include "../config.h"
+
+// Functions Definitions
+
+// int getNextFacultyId()
+// void createFaculty(Faculty newFaculty)
+// Faculty getFacultyById(int facultyID)
+// bool updateFaculty(Faculty faculty)
 
 int getNextFacultyId()
 {
@@ -53,7 +60,6 @@ int getNextFacultyId()
 
         return previousFaculty.id + 1;
     }
-
 }
 
 void createFaculty(Faculty newFaculty)
@@ -100,7 +106,7 @@ Faculty getFacultyById(int facultyID)
     off_t offset;
     int lockingStatus;
     int facultyFileDescriptor = open(FACULTY_FILE, O_RDONLY);
-    offset = lseek(facultyFileDescriptor, (facultyID-1) * sizeof(Faculty), SEEK_SET);
+    offset = lseek(facultyFileDescriptor, (facultyID - 1) * sizeof(Faculty), SEEK_SET);
     if (offset == -1)
     {
         perror("Error while seeking to required faculty record!");
@@ -130,7 +136,6 @@ Faculty getFacultyById(int facultyID)
     close(facultyFileDescriptor);
 
     return faculty;
-
 }
 
 bool updateFaculty(Faculty faculty)
@@ -142,7 +147,7 @@ bool updateFaculty(Faculty faculty)
         perror("Error while opening faculty file");
         return false;
     }
-    int offset = lseek(facultyFileDescriptor, (faculty.id-1) * sizeof(Faculty), SEEK_SET);
+    int offset = lseek(facultyFileDescriptor, (faculty.id - 1) * sizeof(Faculty), SEEK_SET);
     if (offset == -1)
     {
         perror("Error while seeking to required faculty record!");

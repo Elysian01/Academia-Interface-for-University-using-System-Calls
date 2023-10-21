@@ -56,6 +56,7 @@ int login_handler(UserType user, int connFD)
         return 0;
     }
 
+    // In the below readBytes, we will get the login-id
     readBytes = read(connFD, readBuffer, sizeof(readBuffer));
     if (readBytes == -1)
     {
@@ -65,6 +66,7 @@ int login_handler(UserType user, int connFD)
 
     bool userFound = false;
 
+    // checking is user exist or not
     if (user == ADMIN)
     {
         if (strcmp(readBuffer, ADMIN_LOGIN_ID) == 0)
@@ -78,6 +80,7 @@ int login_handler(UserType user, int connFD)
     }
     else if (user == STUDENT)
     {
+        // if the user is student then we have to check whether he is active or not
         student = getStudentByLoginId(readBuffer);
         if (student.id != -1 && student.isActive)
             userFound = true;
@@ -86,6 +89,7 @@ int login_handler(UserType user, int connFD)
     if (userFound)
     {
         bzero(writeBuffer, sizeof(writeBuffer));
+        // if user exist only then we ask for password
         writeBytes = write(connFD, PASSWORD, strlen(PASSWORD));
         if (writeBytes == -1)
         {
@@ -94,6 +98,7 @@ int login_handler(UserType user, int connFD)
         }
 
         bzero(readBuffer, sizeof(readBuffer));
+        // get the password from client
         readBytes = read(connFD, readBuffer, sizeof(readBuffer));
         if (readBytes == -1)
         {
@@ -136,7 +141,7 @@ int login_handler(UserType user, int connFD)
 Faculty getFacultyByLoginId(char *loginId)
 {
     Faculty faculty;
-    int totalFaculty = getNextFacultyId();
+    int totalFaculty = getNextFacultyId(); // returns total number of faculty
     for (int i = 1; i < totalFaculty; i++)
     {
         faculty = getFacultyById(i);

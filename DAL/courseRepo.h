@@ -3,10 +3,18 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <errno.h> 
+#include <errno.h>
 #include "../Model/model.h"
 #include "../config.h"
 
+// Functions Definitions
+
+// int getNextCourseId()
+// void createCourse(Course newCourse)
+// Course getCourseById(int courseID) => returns Course
+// bool updateCourse(Course course)
+
+// basically here we acquire read lock on the last course, and next course-id is that course-id + 1
 int getNextCourseId()
 {
     ssize_t readBytes, writeBytes;
@@ -53,9 +61,9 @@ int getNextCourseId()
 
         return previousCourse.id + 1;
     }
-
 }
 
+// The below function basically creates a new course and append it to CourseDB file, by WR Lock
 void createCourse(Course newCourse)
 {
     ssize_t readBytes, writeBytes;
@@ -97,8 +105,10 @@ Course getCourseById(int courseID)
     ssize_t readBytes;
     off_t offset;
     int lockingStatus;
+
     int courseFileDescriptor = open(COURSE_FILE, O_RDONLY);
-    offset = lseek(courseFileDescriptor, (courseID-1) * sizeof(Course), SEEK_SET);
+    // courseID starts from 1
+    offset = lseek(courseFileDescriptor, (courseID - 1) * sizeof(Course), SEEK_SET);
     if (offset == -1)
     {
         perror("Error while seeking to required course record!");
@@ -128,7 +138,6 @@ Course getCourseById(int courseID)
     close(courseFileDescriptor);
 
     return course;
-
 }
 
 bool updateCourse(Course course)
@@ -140,7 +149,7 @@ bool updateCourse(Course course)
         perror("Error while opening course file");
         return false;
     }
-    int offset = lseek(courseFileDescriptor, (course.id-1) * sizeof(Course), SEEK_SET);
+    int offset = lseek(courseFileDescriptor, (course.id - 1) * sizeof(Course), SEEK_SET);
     if (offset == -1)
     {
         perror("Error while seeking to required course record!");
