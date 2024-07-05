@@ -2,6 +2,13 @@
 
 Academia an interface for university applications, written in C language which invokes many system calls, and makes use of IPC mechanisms as well for communication between processes
 
+An interface for university applications using C-language,
+featuring faculty, student, and course registration, course enrollment
+and dropping, and user authentication for various roles. Implemented
+IPC mechanisms for process communication, fork system call for
+concurrent client handling, and a server maintaining databases for
+courses, faculty, and students
+
 ## Features
 
 - Faculty Registration.
